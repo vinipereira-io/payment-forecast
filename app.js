@@ -1,6 +1,6 @@
 function repaymentForecast(rate, numberPayments, loanAmount, repaymentAmount, startingDate) {
     let repayments = [];
-    let prevBalance = loanAmount;
+    let prevBalance = Math.abs(loanAmount);
     let prevDate = startingDate;
 
     function roundUpCurrency(number) {
@@ -42,7 +42,7 @@ function repaymentForecast(rate, numberPayments, loanAmount, repaymentAmount, st
                 'id': i,
                 'date': new Date(newDate).toLocaleDateString('en-AU'),
                 'openingBalance': prevBalance,
-                'repayment': repaymentAmount,
+                'repayment': Math.abs(repaymentAmount),
                 'interest': newInterest,
                 'principal': newPrincipal,
                 'closingBalance': fixFloatingPoint(prevBalance - newPrincipal)
@@ -58,4 +58,4 @@ function repaymentForecast(rate, numberPayments, loanAmount, repaymentAmount, st
     return repayments;
 }
 
-console.log(repaymentForecast(0.029166667, 36, 20000, 904.73, new Date()));
+console.log(repaymentForecast(0.029166667, 36, -20000, -904.73, new Date()));
