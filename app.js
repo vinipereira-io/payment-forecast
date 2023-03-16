@@ -1,4 +1,4 @@
-function repaymentForecast(rate, numberPayments, loanAmount, repaymentAmount, startingDate) {
+function repaymentForecast(rate, numberPayments, frequencyPayments, loanAmount, repaymentAmount, startingDate) {
     let repayments = [];
     let prevBalance = Math.abs(loanAmount);
     let prevDate = startingDate;
@@ -16,11 +16,24 @@ function repaymentForecast(rate, numberPayments, loanAmount, repaymentAmount, st
         return fixedNumber;
     }
 
+    function setNewDate(date, frequency) {
+        const currentDate = new Date(date);
+
+        if (frequency === 'monthly') {
+            return currentDate.setMonth(currentDate.getMonth() + 1);
+        } else if (frequency === 'fortnightly') {
+            return currentDate.setDate(currentDate.getDate() + 14);
+        } else if (frequency === 'weekly') {
+            return currentDate.setDate(currentDate.getDate() + 7);
+        } else {
+            return currentDate
+        }
+    }
+
     for (let i = 1; i <= numberPayments; i++) {
-        const newMonth = new Date(prevDate).getMonth() + 1;
-        const newDate = new Date(prevDate).setMonth(newMonth);
+        const newDate = setNewDate(prevDate, frequencyPayments);
         const newInterest = roundUpCurrency(prevBalance * rate);
-        const newPrincipal = fixFloatingPoint(repaymentAmount - newInterest);
+        const newPrincipal = fixFloatingPoint(Math.abs(repaymentAmount) - newInterest);
 
         if (i === numberPayments) {
             const lastRepaymentAmount = roundUpCurrency(prevBalance + newInterest);
@@ -59,4 +72,4 @@ function repaymentForecast(rate, numberPayments, loanAmount, repaymentAmount, st
     return JSON.stringify(repayments);
 }
 
-console.log(repaymentForecast(0.029166667, 6, -20000, -904.73, new Date()));
+console.log(repaymentForecast(0.013461538, 52, 'fortnightly', -20000, -537.29, new Date()));
