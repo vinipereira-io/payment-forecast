@@ -28,19 +28,20 @@ function repaymentForecast(rate, numberPayments, loanAmount, repaymentAmount, st
 
             const obj = {
                 'id': i,
-                'date': new Date(newDate).toLocaleDateString('en-AU'),
+                'date': new Date(newDate).toLocaleDateString('en-US'),
                 'openingBalance': prevBalance,
                 'repayment': lastRepaymentAmount,
                 'interest': newInterest,
                 'principal': lastPrincipal,
                 'closingBalance': fixFloatingPoint(prevBalance - lastPrincipal)
             }  
-
+            //push the JSON object as a string, because it will be returned as string on Bubble,
+            //and parsed in the app (using a generic API call)
             repayments.push(obj);
         } else {
             const obj = {
                 'id': i,
-                'date': new Date(newDate).toLocaleDateString('en-AU'),
+                'date': new Date(newDate).toLocaleDateString('en-US'),
                 'openingBalance': prevBalance,
                 'repayment': Math.abs(repaymentAmount),
                 'interest': newInterest,
@@ -55,7 +56,7 @@ function repaymentForecast(rate, numberPayments, loanAmount, repaymentAmount, st
         prevDate = newDate;
     }
 
-    return repayments;
+    return JSON.stringify(repayments);
 }
 
-console.log(repaymentForecast(0.029166667, 36, -20000, -904.73, new Date()));
+console.log(repaymentForecast(0.029166667, 6, -20000, -904.73, new Date()));
