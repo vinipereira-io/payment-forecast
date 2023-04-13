@@ -5,17 +5,9 @@ function bubble_repaymentForecast(properties, context) {
     let prevDate = properties.startingDate;
 
     function roundNumber(number) {
-        //const roundedNumber = Math.ceil(number * 100) / 100;
         const roundedNumber = Math.round(number * 100) / 100;
 
         return roundedNumber;
-    }
-
-    function roundNumber(number) {
-        const fixedString = number.toFixed(2);
-        const fixedNumber = parseFloat(fixedString);
-
-        return fixedNumber;
     }
     
     function setNewDate(date, offset, frequency) {
@@ -83,7 +75,9 @@ function bubble_repaymentForecast(properties, context) {
     
 //return the JSON object as a string, because it will be returned as string on Bubble,
 //and parsed in the app (using a generic API call)
-return JSON.stringify(repayments)
+return {
+    returnRepayments: JSON.stringify(repayments)
+}
 }
 
 console.log(bubble_repaymentForecast(
