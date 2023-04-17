@@ -145,6 +145,7 @@ if (properties.frequencyPayments === 'monthly') {
 //return the JSON object as a string, because it will be returned as string on Bubble,
 //and parsed in the app (using a generic API call)
 return {
+    returnRepayment: payment,
     returnRepaymentForecast: JSON.stringify(repaymentForecast)
 }
 }
