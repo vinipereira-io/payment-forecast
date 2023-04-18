@@ -51,25 +51,25 @@ function bubble_repaymentForecast(properties, context) {
         return roundedPayment
     }
 
-    function setRepaymentForecast(loanAmount, rate, payment, numberPayments, frequencyPayments, startingDate) {
+    function setRepaymentForecast(loanAmount, rate, payment, numberPayments, frequencyPayments, establishmentDate, firstRepaymentDate) {
         let dailyRate = rate / 365;
         let repayments = [];
         let prevBalance = Math.abs(loanAmount);
-        let prevDate = startingDate;
+        let prevDate = establishmentDate;
     
-        for (let i = 1; i <= numberPayments; i++) {
-            const newDate = setNewDate(startingDate, i, frequencyPayments);
+        for (let i = 0; i < numberPayments; i++) {
+            const newDate = setNewDate(firstRepaymentDate, i, frequencyPayments);
             const diffTime = Math.abs(newDate - prevDate);
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
             const newInterest = roundNumber(diffDays * dailyRate * prevBalance);
             const newPrincipal = roundNumber(Math.abs(payment) - newInterest);
     
-            if (i === numberPayments) {
+            if (i === numberPayments - 1) {
                 const lastRepayment = roundNumber(prevBalance + newInterest);
                 const lastPrincipal = roundNumber(lastRepayment - newInterest);
             
                 const obj = {
-                    'id': i,
+                    'id': i + 1,
                     'date': new Date(newDate).toLocaleDateString('en-US'),
                     'openingBalance': prevBalance,
                     'repayment': lastRepayment,
@@ -81,7 +81,7 @@ function bubble_repaymentForecast(properties, context) {
                 repayments.push(obj);
             } else {
                 const obj = {
-                    'id': i,
+                    'id': i + 1,
                     'date': new Date(newDate).toLocaleDateString('en-US'),
                     'openingBalance': prevBalance,
                     'repayment': Math.abs(payment),
@@ -102,7 +102,7 @@ function bubble_repaymentForecast(properties, context) {
 
     function adjustMonthlyPayment(originalForecast) {
     
-        let lastDate = properties.startingDate;
+        let lastDate = properties.establishmentDate;
         
         let sumOfProducts = 0;
         
@@ -134,12 +134,12 @@ const convertedRate = convertRateToFrequency(properties.rate, properties.frequen
 
 let payment = calculatePayment(convertedRate, properties.numberPayments, properties.loanAmount);
 
-let repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, properties.startingDate);
+let repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, properties.establishmentDate, properties.firstRepaymentDate);
 
 if (properties.frequencyPayments === 'monthly') {
     payment = adjustMonthlyPayment(repaymentForecast);
 
-    repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, properties.startingDate);
+    repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, properties.establishmentDate, properties.firstRepaymentDate);
 }
 
 //return the JSON object as a string, because it will be returned as string on Bubble,
@@ -156,7 +156,8 @@ console.log(bubble_repaymentForecast(
             numberPayments: 12,
             frequencyPayments: 'monthly',
             loanAmount: 20000,
-            startingDate: 1681308000000
+            establishmentDate: 1681740000000,
+            firstRepaymentDate: 1682863200000,
         },
         {   
 
