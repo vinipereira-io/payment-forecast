@@ -101,7 +101,7 @@ function bubble_repaymentForecast(properties, context) {
 
     function adjustMonthlyPayment(originalForecast) {
     
-        let lastDate = properties.establishmentDate;
+        let lastDate = establishmentDate;
         
         let sumOfProducts = 0;
         
@@ -129,16 +129,18 @@ function bubble_repaymentForecast(properties, context) {
         return adjustedPayment;        
     }
 
+const establishmentDate = new Date(properties.establishmentDate);
+const firstRepaymentDate = new Date(properties.firstRepaymentDate);
 const convertedRate = convertRateToFrequency(properties.rate, properties.frequencyPayments);
 
 let payment = calculatePayment(convertedRate, properties.numberPayments, properties.loanAmount);
 
-let repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, properties.establishmentDate, properties.firstRepaymentDate);
+let repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, establishmentDate, firstRepaymentDate);
 
 if (properties.frequencyPayments === 'monthly') {
     payment = adjustMonthlyPayment(repaymentForecast);
 
-    repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, properties.establishmentDate, properties.firstRepaymentDate);
+    repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, establishmentDate, firstRepaymentDate);
 }
 
 //return the JSON object as a string, because it will be returned as string on Bubble,
@@ -155,8 +157,8 @@ console.log(bubble_repaymentForecast(
             numberPayments: 12,
             frequencyPayments: 'monthly',
             loanAmount: 20000,
-            establishmentDate: 1681740000000,
-            firstRepaymentDate: 1682863200000,
+            establishmentDate: '2023-04-19',
+            firstRepaymentDate: '2023-04-19',
         },
         {   
 
