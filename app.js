@@ -68,25 +68,25 @@ function bubble_repaymentForecast(properties, context) {
                 const lastPrincipal = roundNumber(lastRepayment - newInterest);
             
                 const obj = {
-                    'id': i + 1,
-                    'date': new Date(newDate).toLocaleDateString('en-US'),
-                    'openingBalance': prevBalance,
-                    'repayment': lastRepayment,
-                    'interest': newInterest,
-                    'principal': lastPrincipal,
-                    'closingBalance': roundNumber(prevBalance - lastPrincipal)
+                    '_p_id': i + 1,
+                    '_p_date': new Date(newDate).toLocaleDateString('en-US'),
+                    '_p_openingBalance': prevBalance,
+                    '_p_repayment': lastRepayment,
+                    '_p_interest': newInterest,
+                    '_p_principal': lastPrincipal,
+                    '_p_closingBalance': roundNumber(prevBalance - lastPrincipal)
                 }  
     
                 repayments.push(obj);
             } else {
                 const obj = {
-                    'id': i + 1,
-                    'date': new Date(newDate).toLocaleDateString('en-US'),
-                    'openingBalance': prevBalance,
-                    'repayment': Math.abs(payment),
-                    'interest': newInterest,
-                    'principal': newPrincipal,
-                    'closingBalance': roundNumber(prevBalance - newPrincipal)
+                    '_p_id': i + 1,
+                    '_p_date': new Date(newDate).toLocaleDateString('en-US'),
+                    '_p_openingBalance': prevBalance,
+                    '_p_repayment': Math.abs(payment),
+                    '_p_interest': newInterest,
+                    '_p_principal': newPrincipal,
+                    '_p_closingBalance': roundNumber(prevBalance - newPrincipal)
                 }
     
                 repayments.push(obj);
@@ -99,32 +99,32 @@ function bubble_repaymentForecast(properties, context) {
         return repayments;
     }
 
-    function adjustMonthlyPayment(originalForecast) {
+    function adjustPayment(originalForecast) {
     
         let lastDate = establishmentDate;
         
         let sumOfProducts = 0;
         
         for (entry of originalForecast) {
-            const diffTime = new Date(entry.date) - lastDate;
+            const diffTime = new Date(entry._p_date) - lastDate;
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
         
-            sumOfProducts += diffDays * entry.interest;
+            sumOfProducts += diffDays * entry._p_interest;
         
-            lastDate = new Date(entry.date);
+            lastDate = new Date(entry._p_date);
         }
         
         let sumOfInterests = 0;
         
         for (entry of originalForecast) {
-            sumOfInterests += entry.interest;
+            sumOfInterests += entry._p_interest;
         }
         
-        const daysPerMonth = sumOfProducts / sumOfInterests;
+        const daysPerEntry = sumOfProducts / sumOfInterests;
 
-        const adjustedMonthlyRate = properties.rate / 365 * daysPerMonth;
+        const adjustedRate = properties.rate / 365 * daysPerEntry;
 
-        const adjustedPayment = calculatePayment(adjustedMonthlyRate, properties.numberPayments, properties.loanAmount)
+        const adjustedPayment = calculatePayment(adjustedRate, properties.numberPayments, properties.loanAmount)
 
         return adjustedPayment;        
     }
@@ -137,28 +137,24 @@ let payment = calculatePayment(convertedRate, properties.numberPayments, propert
 
 let repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, establishmentDate, firstRepaymentDate);
 
-if (properties.frequencyPayments === 'monthly') {
-    payment = adjustMonthlyPayment(repaymentForecast);
+payment = adjustPayment(repaymentForecast);
 
-    repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, establishmentDate, firstRepaymentDate);
-}
+repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, establishmentDate, firstRepaymentDate);
 
-//return the JSON object as a string, because it will be returned as string on Bubble,
-//and parsed in the app (using a generic API call)
 return {
     returnRepayment: payment,
-    returnRepaymentForecast: JSON.stringify(repaymentForecast)
+    returnRepaymentForecast: repaymentForecast
 }
 }
 
 console.log(bubble_repaymentForecast(
         {
             rate: 0.35,
-            numberPayments: 12,
-            frequencyPayments: 'monthly',
+            numberPayments: 26,
+            frequencyPayments: 'fortnightly',
             loanAmount: 20000,
-            establishmentDate: '2023-04-19',
-            firstRepaymentDate: '2023-04-19',
+            establishmentDate: '2023-05-09',
+            firstRepaymentDate: '2023-05-31',
         },
         {   
 
