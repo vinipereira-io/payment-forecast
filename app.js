@@ -1,8 +1,15 @@
 function bubble_repaymentForecast(properties, context) {
     function roundNumber(number) {
-        const roundedNumber = Math.round(number * 100) / 100;
+        const roundedNumber = Math.ceil(number * 100) / 100;
 
         return roundedNumber;
+    }
+
+    function calculateDays(startDate, endDate) {
+        const diffTime = Math.abs(endDate - startDate);
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays;
     }
 
     function setNewDate(date, offset, frequency) {
@@ -40,26 +47,28 @@ function bubble_repaymentForecast(properties, context) {
         }
     }
 
-    function calculatePayment(rate, numberPayments, loanAmount) {
-        const Finance = require('financejs');
-        const finance = new Finance();
-
-        const payment = finance.PMT(rate, numberPayments, -Math.abs(loanAmount));
-        const roundedPayment = Math.ceil(payment * 100) / 100;
-        
-        return roundedPayment
+    function calculatePayment(interestRate, periods, presentValue, type = 0) {
+    // Calculate the PMT
+    var payment = (presentValue * interestRate) / (1 - Math.pow(1 + interestRate, -periods));
+  
+    // Adjust the result based on the payment type (beginning or end of the period)
+    if (type === 1) {
+        payment = payment / (1 + interestRate);
     }
 
-    function setRepaymentForecast(loanAmount, rate, payment, numberPayments, frequencyPayments, establishmentDate, firstRepaymentDate) {
-        let dailyRate = rate / 365;
+    let roundedPayment = roundNumber(payment)
+  
+    return roundedPayment;
+    }
+
+    function setRepaymentForecast(loanAmount, dailyRate, payment, numberPayments, frequencyPayments, establishmentDate, firstRepaymentDate) {
         let repayments = [];
         let prevBalance = Math.abs(loanAmount);
         let prevDate = establishmentDate;
     
         for (let i = 0; i < numberPayments; i++) {
             const newDate = setNewDate(firstRepaymentDate, i, frequencyPayments);
-            const diffTime = Math.abs(newDate - prevDate);
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = calculateDays(prevDate, newDate);
             const newInterest = roundNumber(diffDays * dailyRate * prevBalance);
             const newPrincipal = roundNumber(Math.abs(payment) - newInterest);
     
@@ -100,14 +109,15 @@ function bubble_repaymentForecast(properties, context) {
     }
 
     function adjustPayment(originalForecast) {
-    
-        let lastDate = establishmentDate;
+        let lastDate = firstRepaymentDate;
+        
+        //We don't want to use the gap between establishment date and first repayment date in our weighted average
+        originalForecast.splice(0, 1);
         
         let sumOfProducts = 0;
         
         for (entry of originalForecast) {
-            const diffTime = new Date(entry._p_date) - lastDate;
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = calculateDays(lastDate, new Date(entry._p_date));
         
             sumOfProducts += diffDays * entry._p_interest;
         
@@ -124,7 +134,7 @@ function bubble_repaymentForecast(properties, context) {
 
         const adjustedRate = properties.rate / 365 * daysPerEntry;
 
-        const adjustedPayment = calculatePayment(adjustedRate, properties.numberPayments, properties.loanAmount)
+        const adjustedPayment = calculatePayment(adjustedRate, properties.numberPayments, presentValue, 1)
 
         return adjustedPayment;        
     }
@@ -132,14 +142,21 @@ function bubble_repaymentForecast(properties, context) {
 const establishmentDate = new Date(properties.establishmentDate);
 const firstRepaymentDate = new Date(properties.firstRepaymentDate);
 const convertedRate = convertRateToFrequency(properties.rate, properties.frequencyPayments);
+const dailyRate = properties.rate / 365
 
-let payment = calculatePayment(convertedRate, properties.numberPayments, properties.loanAmount);
+let presentValue = properties.loanAmount;
 
-let repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, establishmentDate, firstRepaymentDate);
+presentValue += roundNumber(calculateDays(establishmentDate, firstRepaymentDate) * dailyRate * presentValue)
 
-payment = adjustPayment(repaymentForecast);
+let payment = calculatePayment(convertedRate, properties.numberPayments, presentValue, 1);
 
-repaymentForecast = setRepaymentForecast(properties.loanAmount, properties.rate, payment, properties.numberPayments, properties.frequencyPayments, establishmentDate, firstRepaymentDate);
+let repaymentForecast = setRepaymentForecast(properties.loanAmount, dailyRate, payment, properties.numberPayments, properties.frequencyPayments, establishmentDate, firstRepaymentDate);
+
+if (properties.frequencyPayments === 'monthly') {
+    payment = adjustPayment(repaymentForecast);
+
+    repaymentForecast = setRepaymentForecast(properties.loanAmount, dailyRate, payment, properties.numberPayments, properties.frequencyPayments, establishmentDate, firstRepaymentDate);
+}
 
 return {
     returnRepayment: payment,
@@ -149,14 +166,14 @@ return {
 
 console.log(bubble_repaymentForecast(
         {
-            rate: 0.35,
-            numberPayments: 26,
-            frequencyPayments: 'fortnightly',
-            loanAmount: 20000,
-            establishmentDate: '2023-05-09',
-            firstRepaymentDate: '2023-05-31',
+            rate: 0.375,
+            numberPayments: 130,
+            frequencyPayments: 'monthly',
+            loanAmount: 16500,
+            establishmentDate: '2023-05-31',
+            firstRepaymentDate: '2023-06-30', //maximum 30 days diff
         },
         {   
 
         }
-    ))
+    ).returnRepaymentForecast[129])
