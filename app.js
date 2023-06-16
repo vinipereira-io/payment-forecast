@@ -1,6 +1,6 @@
 function bubble_repaymentForecast(properties, context) {
     function roundNumber(number) {
-        const roundedNumber = Math.ceil(number * 100) / 100;
+        const roundedNumber = Math.round(number * 100) / 100;
 
         return roundedNumber;
     }
